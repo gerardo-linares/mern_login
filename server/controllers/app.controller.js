@@ -1,6 +1,30 @@
 import UserModel from "../models/User.model.js"
 import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
+import ENV from "../config.js"
 
+
+
+
+
+
+// Middleware for verifying the existence of a user
+export async function verifyUser(req, res, next) {
+    try {
+        const { username } = req.method === "GET" ? req.query : req.body;
+
+        // Check user existence
+        const exist = await UserModel.findOne({ username });
+        if (!exist) {
+            return res.status(404).send({ error: "Could not find the user" });
+        }
+
+        // If the user exists, proceed with execution
+        next();
+    } catch (error) {
+        return res.status(404).send({ error: "Authentication error" });
+    }
+}
 
 
 //POST
@@ -47,9 +71,38 @@ export async function register(req, res) {
 }
 
 //POST
-export async function login (req,res){
-    res.json('login route')
+export async function login(req, res) {
+    const { username, password } = req.body;
+    try {
+        UserModel.findOne({ username })
+            .then(user => {
+                bcrypt.compare(password, user.password)
+                    .then(passwordCheck => {
+                        if (!passwordCheck) return res.status(400).send({ error: "Incorrect Password" })
+                        //create jwt token
+                        const token = jwt.sign({
+                            userId: user._id,
+                            username: user.username
+                        }, ENV.JWT_SECRET, { expiresIn: "24h" })
+                        return res.status(200).send({
+                            msg: "Login successful...!",
+                            username: user.username,
+                            token
+                        })
+                    })
+                    .catch(error => {
+                        return res.status(404).send({ error: "Password does not match" })
+                    })
+            })
+            .catch(error => {
+                return res.status(404).send({ error: "Username not found" })
+            })
+    } catch (error) {
+        return res.status(500).send({ error: "internal server" })
+    }
 }
+
+
 
 //GET
 export async function getUser (req,res){

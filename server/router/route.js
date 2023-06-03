@@ -5,6 +5,7 @@ import * as controller from '../controllers/app.controller.js'
 const router = Router();
 
 
+
 // POST METHODS //
 
 router.post("/register", controller.register)
@@ -17,7 +18,7 @@ router.post("/registerMail", (req, res) => {//Send the email"
 
 router.post("/authenticate", (req, res) => res.end());//Auhenticate user"   
 
-router.post("/login", controller.login)
+router.post("/login",controller.verifyUser, controller.login)
 
 
 
