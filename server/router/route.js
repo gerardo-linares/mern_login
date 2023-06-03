@@ -1,32 +1,23 @@
 import { Router } from "express";
+//Import all controllers//
+import * as controller from '../controllers/app.controller.js'
 
 const router = Router();
 
 
 // POST METHODS //
 
-router.post("/register", (req, res) => {
-    //Register user"
+router.post("/register", controller.register)
 
-    res.json("register route");
-});
 
-router.post("/registerMail", (req, res) => {
-    //Send the email"
+router.post("/registerMail", (req, res) => {//Send the email"
 
     res.json("register mail");
 });
 
-router.post("/authenticate", (req, res) => {
-    //Auhenticate user"
+router.post("/authenticate", (req, res) => res.end());//Auhenticate user"   
 
-    res.json("Auhenticate user");
-});
-
-router.post("/login", (req, res) => {
-//login user
-    res.json("login route");
-});
+router.post("/login", controller.login)
 
 
 
@@ -34,21 +25,17 @@ router.post("/login", (req, res) => {
 
 // GET METHODS //
 
-router.get("/user/username", (req, res) => {
-    // user with username
+router.get("/user/username", (req, res) => {// user with username
     res.send("username");
 });
 
-router.get("/user/generateOTP", (req, res) => {
-    // generate random OTP
+router.get("/user/generateOTP", (req, res) => {// generate random OTP
     res.send("generate random OTP");
 });
-router.get("/user/verifyOTP", (req, res) => {
-    // verify generated OTP
+router.get("/user/verifyOTP", (req, res) => {// verify generated OTP
     res.send("verify generated OTP");
 });
-router.get("/user/createResetSession", (req, res) => {
-    // reset all the variables
+router.get("/user/createResetSession", (req, res) => {// reset all the variables
     res.send("reset all the variables");
 });
 
@@ -58,12 +45,10 @@ router.get("/user/createResetSession", (req, res) => {
 
 // PUT METHODS //
 
-router.put("/updateUser", (req, res) => {
-    // update user profile
+router.put("/updateUser", (req, res) => {// update user profile
     res.send("update user profile");
 });
-router.put("/resetPassword", (req, res) => {
-    // reset password
+router.put("/resetPassword", (req, res) => {// reset password
     res.send("reset password");
 });
 
