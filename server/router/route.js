@@ -26,9 +26,7 @@ router.post("/login",controller.verifyUser, controller.login)
 
 // GET METHODS //
 
-router.get("/user/username", (req, res) => {// user with username
-    res.send("username");
-});
+router.get("/user/:username",controller.getUser) // user with username
 
 router.get("/user/generateOTP", (req, res) => {// generate random OTP
     res.send("generate random OTP");
@@ -46,9 +44,8 @@ router.get("/user/createResetSession", (req, res) => {// reset all the variables
 
 // PUT METHODS //
 
-router.put("/updateUser", (req, res) => {// update user profile
-    res.send("update user profile");
-});
+router.put("/updateuser",controller.updateUser) // update user profile
+
 router.put("/resetPassword", (req, res) => {// reset password
     res.send("reset password");
 });

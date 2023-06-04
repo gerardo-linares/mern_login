@@ -9,27 +9,27 @@ import ENV from "../config.js"
 
 
 // Middleware for verifying the existence of a user
-export async function verifyUser(req, res, next) {
+export const verifyUser = async (req, res, next) => {
     try {
-        const { username } = req.method === "GET" ? req.query : req.body;
+        const { username } = req.method === 'GET' ? req.query : req.body;
 
         // Check user existence
         const exist = await UserModel.findOne({ username });
         if (!exist) {
-            return res.status(404).send({ error: "Could not find the user" });
+            return res.status(404).send({ error: 'Could not find the user' });
         }
 
         // If the user exists, proceed with execution
         next();
     } catch (error) {
-        return res.status(404).send({ error: "Authentication error" });
+        return res.status(404).send({ error: 'Authentication error' });
     }
-}
+};
 
 
 //POST
 
-export async function register(req, res) {
+export const register = async (req, res) => {
     try {
         const { username, password, profile, email } = req.body;
         // check exist username
@@ -68,50 +68,101 @@ export async function register(req, res) {
     } catch (error) {
         res.status(500).send({ error: error.message });
     }
-}
+};
 
 //POST
-export async function login(req, res) {
+export const login = async (req, res) => {
     const { username, password } = req.body;
     try {
         UserModel.findOne({ username })
             .then(user => {
                 bcrypt.compare(password, user.password)
                     .then(passwordCheck => {
-                        if (!passwordCheck) return res.status(400).send({ error: "Incorrect Password" })
+                        if (!passwordCheck) return res.status(400).send({ error: "Incorrect Password" });
                         //create jwt token
-                        const token = jwt.sign({
-                            userId: user._id,
-                            username: user.username
-                        }, ENV.JWT_SECRET, { expiresIn: "24h" })
+                        const token = jwt.sign(
+                            {
+                                userId: user._id,
+                                username: user.username
+                            },
+                            ENV.JWT_SECRET,
+                            { expiresIn: "24h" }
+                        );
                         return res.status(200).send({
                             msg: "Login successful...!",
                             username: user.username,
                             token
-                        })
+                        });
                     })
                     .catch(error => {
-                        return res.status(404).send({ error: "Password does not match" })
-                    })
+                        return res.status(404).send({ error: "Password does not match" });
+                    });
             })
             .catch(error => {
-                return res.status(404).send({ error: "Username not found" })
-            })
+                return res.status(404).send({ error: "Username not found" });
+            });
     } catch (error) {
-        return res.status(500).send({ error: "internal server" })
+        return res.status(500).send({ error: "internal server" });
     }
-}
-
-
+};
 
 //GET
-export async function getUser (req,res){
-    res.json('getUser route')
-}
+export const getUser = async (req, res) => {
+    const { username } = req.params;
+
+    if (!username) {
+        return res.status(400).send({ error: "Username is required" });
+    }
+
+    try {
+        const user = await UserModel.findOne({ username });
+
+        if (!user) {
+            return res.status(404).send({ error: "User not found" });
+        }
+
+        // Remove password from user
+        const { password, ...userData } = user.toObject();
+
+        return res.status(200).send(userData);
+    } catch (error) {
+        return res.status(500).send({ error: "Internal server error" });
+    }
+};
+
+
+
+
+
 //PUT
-export async function updateUser (req,res){
-    res.json('updateUser route')
-}
+export const updateUser = async (req, res) => {
+    try {
+        const userId = req.query.id;
+
+        if (!userId) {
+            return res.status(401).send({ error: "User Not Found" });
+        }
+
+        const body = req.body;
+
+        const updatedUser = await UserModel.findOneAndUpdate(
+            { _id: userId },
+            body,
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).send({ error: "User not found" });
+        }
+
+        return res.status(200).send({ msg: "Record Updated", user: updatedUser });
+    } catch (error) {
+        return res.status(500).send({ error: "Internal server error" });
+    }
+};
+
+
+
 
 //GET
 export async function generateOTP(req,res){
