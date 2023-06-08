@@ -2,6 +2,7 @@ import UserModel from "../models/User.model.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import ENV from "../config.js"
+import otpGenerator from 'otp-generator'
 
 
 
@@ -122,56 +123,75 @@ export const getUser = async (req, res) => {
         }
 
         // Remove password from user
-        const { password, ...userData } = user.toObject();
+        const { password, ...rest } = user.toObject();
 
-        return res.status(200).send(userData);
+        return res.status(200).send(rest);
     } catch (error) {
         return res.status(500).send({ error: "Internal server error" });
     }
 };
-
-
-
 
 
 //PUT
 export const updateUser = async (req, res) => {
     try {
-        const userId = req.query.id;
-
-        if (!userId) {
-            return res.status(401).send({ error: "User Not Found" });
-        }
-
-        const body = req.body;
-
-        const updatedUser = await UserModel.findOneAndUpdate(
-            { _id: userId },
-            body,
-            { new: true }
-        );
-
-        if (!updatedUser) {
-            return res.status(404).send({ error: "User not found" });
-        }
-
-        return res.status(200).send({ msg: "Record Updated", user: updatedUser });
+      const{userId} = req.user // Obtener el ID del usuario del objeto de solicitud
+  
+      if (!userId) {
+        return res.status(401).send({ error: "User Not Found" });
+      }
+  
+      const body = req.body;
+  
+      const updatedUser = await UserModel.updateOne(
+        { _id: userId },
+        body,
+        { new: true }
+      );
+  
+      if (!updatedUser) {
+        return res.status(404).send({ error: "User not found" });
+      }
+  
+      // Enviar la respuesta al cliente una vez
+      return res.status(200).send({ msg: "Record Updated", user: updatedUser });
     } catch (error) {
-        return res.status(500).send({ error: "Internal server error" });
+      console.error(error);
+      return res.status(500).send({ error: "Internal server error" });
     }
 };
 
 
 
 
+
+
 //GET
-export async function generateOTP(req,res){
-    res.json('ugenerateOTP route')
+export async function generateOTP(req, res) {
+  req.app.locals.OTP = await otpGenerator.generate(6, {
+    lowerCaseAlphabets: false,
+    upperCaseAlphabets: false,
+    specialChars: false,
+  });
+  res.status(201).send({ code: req.app.locals.OTP });
 }
+
+
+
 //GET
 export async function verifyOTP(req,res){
-    res.json('verifyOTP route')
+   const{code} = req.query;
+   if(parseInt(req.app.locals.OTP)=== parseInt(code)){
+   req.app.locals.OTP = null; //reset opt value
+   req.app.locals.resetSession = true;//start session for reset password
+   return res.status(201).send({msg:'Verify Sussesfully'})
 }
+return res.status(400).send({error:"Invalid OTP"})
+}
+
+
+
+
 //GET
 export async function createResetSession(req,res){
     res.json('createResetSession route')

@@ -20,16 +20,16 @@ app.use("/api", router);
 
 // Home Route
 app.get("/", (req, res) => {
-    res.status(201).json("home");
+  res.status(201).json("home");
 });
 
 // Start the server only when a valid connection is established
 connect()
-    .then(() => {
-        app.listen(PORT, () => {
-            console.log(`Server listening on http://localhost:${PORT}`);
-        });
-    })
-    .catch((error) => {
-        console.log("Invalid database connection...");
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server listening on http://localhost:${PORT}`);
     });
+  })
+  .catch((error) => {
+    console.log("Invalid database connection...");
+  });

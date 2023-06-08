@@ -1,7 +1,8 @@
 import { Router } from "express";
 //Import all controllers//
 import * as controller from '../controllers/app.controller.js'
-
+import Auth from "../middleware/auth.js"
+import localVariables from "../middleware/auth.js";
 const router = Router();
 
 
@@ -28,12 +29,11 @@ router.post("/login",controller.verifyUser, controller.login)
 
 router.get("/user/:username",controller.getUser) // user with username
 
-router.get("/user/generateOTP", (req, res) => {// generate random OTP
-    res.send("generate random OTP");
-});
-router.get("/user/verifyOTP", (req, res) => {// verify generated OTP
-    res.send("verify generated OTP");
-});
+router.get("/generateOTP",controller.verifyUser,localVariables,controller.generateOTP); // generate random OTP
+
+router.get("/verifyOTP",controller.verifyOTP );// verify generated OTP
+
+
 router.get("/user/createResetSession", (req, res) => {// reset all the variables
     res.send("reset all the variables");
 });
@@ -44,7 +44,7 @@ router.get("/user/createResetSession", (req, res) => {// reset all the variables
 
 // PUT METHODS //
 
-router.put("/updateuser",controller.updateUser) // update user profile
+router.put("/updateuser",Auth, controller.updateUser) // update user profile
 
 router.put("/resetPassword", (req, res) => {// reset password
     res.send("reset password");
