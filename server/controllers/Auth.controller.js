@@ -1,13 +1,8 @@
-import UserModel from "../models/User.model.js"
-import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
-import ENV from "../config.js"
-import otpGenerator from 'otp-generator'
-
-
-
-
-
+import UserModel from "../models/User.model.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import ENV from "../config.js";
+import otpGenerator from 'otp-generator';
 
 // Middleware for verifying the existence of a user
 export const verifyUser = async (req, res, next) => {
@@ -27,9 +22,7 @@ export const verifyUser = async (req, res, next) => {
     }
 };
 
-
-//POST
-
+// POST
 export const register = async (req, res) => {
     try {
         const { username, password, profile, email } = req.body;
@@ -71,7 +64,7 @@ export const register = async (req, res) => {
     }
 };
 
-//POST
+// POST
 export const login = async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -107,7 +100,7 @@ export const login = async (req, res) => {
     }
 };
 
-//GET
+// GET
 export const getUser = async (req, res) => {
     const { username } = req.params;
 
@@ -131,72 +124,89 @@ export const getUser = async (req, res) => {
     }
 };
 
-
-//PUT
+// PUT
 export const updateUser = async (req, res) => {
     try {
-      const{userId} = req.user // Obtener el ID del usuario del objeto de solicitud
-  
-      if (!userId) {
-        return res.status(401).send({ error: "User Not Found" });
-      }
-  
-      const body = req.body;
-  
-      const updatedUser = await UserModel.updateOne(
-        { _id: userId },
-        body,
-        { new: true }
-      );
-  
-      if (!updatedUser) {
-        return res.status(404).send({ error: "User not found" });
-      }
-  
-      // Enviar la respuesta al cliente una vez
-      return res.status(200).send({ msg: "Record Updated", user: updatedUser });
+        const { userId } = req.user; // Obtener el ID del usuario del objeto de solicitud
+
+        if (!userId) {
+            return res.status(401).send({ error: "User Not Found" });
+        }
+
+        const body = req.body;
+
+        const updatedUser = await UserModel.updateOne(
+            { _id: userId },
+            body,
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).send({ error: "User not found" });
+        }
+
+        // Enviar la respuesta al cliente una vez
+        return res.status(200).send({ msg: "Record Updated", user: updatedUser });
     } catch (error) {
-      console.error(error);
-      return res.status(500).send({ error: "Internal server error" });
+        console.error(error);
+        return res.status(500).send({ error: "Internal server error" });
     }
 };
 
+// GET
+export const generateOTP = async (req, res) => {
+    req.app.locals.OTP = await otpGenerator.generate(6, {
+        lowerCaseAlphabets: false,
+        upperCaseAlphabets: false,
+        specialChars: false,
+    });
+    res.status(201).send({ code: req.app.locals.OTP });
+};
 
+// GET
+export const verifyOTP = async (req, res) => {
+    const { code } = req.query;
+    if (parseInt(req.app.locals.OTP) === parseInt(code)) {
+        req.app.locals.OTP = null; //reset opt value
+        req.app.locals.resetSession = true; //start session for reset password
+        return res.status(201).send({ msg: 'Verify Successfully' });
+    }
+    return res.status(400).send({ error: "Invalid OTP" });
+};
 
+// GET
+export const createResetSession = async (req, res) => {
+    if (req.app.locals.resetSession) {
+        req.app.locals.resetSession = false;
+        return res.status(201).send({ msg: "Access granted" });
+    }
+    return res.status(440).send({ error: "Session expired" });
+};
 
+// POST
+export const resetPassword = async (req, res) => {
+    try {
+        if (!req.app.locals.resetSession) {
+            return res.status(440).send({ error: "Session expired" });
+        }
 
+        const { username, password } = req.body;
 
-//GET
-export async function generateOTP(req, res) {
-  req.app.locals.OTP = await otpGenerator.generate(6, {
-    lowerCaseAlphabets: false,
-    upperCaseAlphabets: false,
-    specialChars: false,
-  });
-  res.status(201).send({ code: req.app.locals.OTP });
-}
+        const user = await UserModel.findOne({ username });
 
+        if (!user) {
+            return res.status(404).send({ error: "Username not found" });
+        }
 
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-//GET
-export async function verifyOTP(req,res){
-   const{code} = req.query;
-   if(parseInt(req.app.locals.OTP)=== parseInt(code)){
-   req.app.locals.OTP = null; //reset opt value
-   req.app.locals.resetSession = true;//start session for reset password
-   return res.status(201).send({msg:'Verify Sussesfully'})
-}
-return res.status(400).send({error:"Invalid OTP"})
-}
+        await UserModel.updateOne(
+            { username: user.username },
+            { password: hashedPassword }
+        );
 
-
-
-
-//GET
-export async function createResetSession(req,res){
-    res.json('createResetSession route')
-}
-
-export async function resetPassword(req,res){
-    res.json('resetPassword route')
-}
+        return res.status(201).send({ msg: "Password reset successfully" });
+    } catch (error) {
+        return res.status(500).send({ error: "Internal server error" });
+    }
+};

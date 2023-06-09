@@ -1,8 +1,9 @@
 import { Router } from "express";
 //Import all controllers//
-import * as controller from '../controllers/app.controller.js'
+import * as controller from '../controllers/Auth.controller.js'
 import Auth from "../middleware/auth.js"
 import localVariables from "../middleware/auth.js";
+import { registerMail } from "../controllers/mailer.js";
 const router = Router();
 
 
@@ -12,10 +13,7 @@ const router = Router();
 router.post("/register", controller.register)
 
 
-router.post("/registerMail", (req, res) => {//Send the email"
-
-    res.json("register mail");
-});
+router.post("/registerMail", registerMail);
 
 router.post("/authenticate", (req, res) => res.end());//Auhenticate user"   
 
@@ -34,9 +32,9 @@ router.get("/generateOTP",controller.verifyUser,localVariables,controller.genera
 router.get("/verifyOTP",controller.verifyOTP );// verify generated OTP
 
 
-router.get("/user/createResetSession", (req, res) => {// reset all the variables
-    res.send("reset all the variables");
-});
+router.get("/createResetSession",controller.createResetSession );// reset all the variables
+
+
 
 
 
@@ -46,8 +44,8 @@ router.get("/user/createResetSession", (req, res) => {// reset all the variables
 
 router.put("/updateuser",Auth, controller.updateUser) // update user profile
 
-router.put("/resetPassword", (req, res) => {// reset password
-    res.send("reset password");
-});
+router.put("/resetPassword",controller.verifyUser,controller.resetPassword);// reset password
+
+
 
 export default router;
